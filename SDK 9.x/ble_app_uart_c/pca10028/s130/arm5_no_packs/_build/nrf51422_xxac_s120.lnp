@@ -1,0 +1,26 @@
+--cpu Cortex-M0
+".\_build\main.o"
+".\_build\bsp.o"
+".\_build\ble_db_discovery.o"
+".\_build\ble_srv_common.o"
+".\_build\device_manager_central.o"
+".\_build\ble_uart_c.o"
+".\_build\app_uart_fifo.o"
+".\_build\nrf_delay.o"
+".\_build\pstorage.o"
+".\_build\nrf_drv_gpiote.o"
+".\_build\nrf_drv_common.o"
+".\_build\app_button.o"
+".\_build\app_error.o"
+".\_build\app_fifo.o"
+".\_build\app_timer.o"
+".\_build\app_trace.o"
+".\_build\nrf_assert.o"
+".\_build\retarget.o"
+".\_build\softdevice_handler.o"
+".\_build\arm_startup_nrf51.o"
+".\_build\system_nrf51.o"
+--library_type=microlib --strict --scatter ".\_build\nrf51422_xxac_s120.sct"
+--summary_stderr --info summarysizes --map --xref --callgraph --symbols
+--info sizes --info totals --info unused --info veneers
+--list ".\_build\nrf51422_xxac_s120.map" -o .\_build\nrf51422_xxac_s120.axf
