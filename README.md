@@ -1,15 +1,16 @@
 ble_app_uart_c
 ==============
+**This version of the project has been updated to use SDK v.9 and Softdevice S130**
 
-Client example with 128 bit UUID service&amp;characteristics for S120
+Client example with 128 bit UUID service&amp;characteristics for S130
 
-It's based on the ble_app_hrs_c. The HRS service was replaced by the NUS (UART) service.
-This project can be used in conjunction with the UART serial port emulation example from SDK v8.0.0 (http://developer.nordicsemi.com/nRF51_SDK/nRF51_SDK_v8.x.x/doc/8.0.0/s110/html/a00072.html).
+It's based on the ble_app_hrs_c. The HRS service was replaced by the NUS (Nordic Uart Service) service.
+This project can be used in conjunction with the UART serial port emulation example from SDK v9.0.0 (http://infocenter.nordicsemi.com/topic/com.nordic.infocenter.sdk51.v9.0.0/ble_sdk_app_nus_eval.html?cp=4_1_0_4_4_17).
 
 Functionality:
 - Scan for and connect to a peripheral that advertise with the 128bit UUID NUS service
 - Do service discovery and notify the application if the NUS UUID service found
-- Enable RX CCCD for notification 
+- Enable RX CCCD for notification (Subscribe to notifications on from the peripheral)
 - Forward data received from the peer device TX Characteristic to UART
 - Forward data received on UART to the peer device RX Characteristic
 
@@ -20,9 +21,9 @@ It may not match with the description of the RX and TX characteristics (reversed
 Requirements
 
 
-nRF51 SDK version 8.0.0
+nRF51 SDK version 9.0.0
 
-S120 v2.0 
+S130 v1.0 
 
 nRF51-DK, or nRF51-Dongle, version 1.0.0 or later
 
