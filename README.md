@@ -1,6 +1,6 @@
 ble_app_uart_c
 ==============
-**This version of the project has been updated to use SDK v.9 and Softdevice S130. For the SDK8 version, see the branch called "SDKv8.0"**
+**This version of the project has been updated to use SDK v.9 and Softdevice S130. For the SDK8 and S120 version, see the branch called "SDKv8.0**
 
 Client example with 128 bit UUID service&amp;characteristics for S130
 
