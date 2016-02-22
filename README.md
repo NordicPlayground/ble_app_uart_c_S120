@@ -1,6 +1,9 @@
 ble_app_uart_c
 ==============
-**This version of the project has been updated to use SDK v.9 and Softdevice S130. For the SDK8 and S120 version, see the branch called "SDKv8.0**
+
++ **This project is now a part of the official nRF5 SDK. It can be found [here](http://infocenter.nordicsemi.com/topic/com.nordic.infocenter.sdk51.v10.0.0/ble_sdk_app_nus_c.html?cp=4_0_1_4_2_0_3). Users are advised to use the SDK version, unless you have a specific reason to use this one.**
+
++ **This version of the project has been updated to use SDK v.9 and Softdevice S130. For the SDK8 and S120 version, see the branch called "SDKv8.0".**
 
 Client example with 128 bit UUID service&amp;characteristics for S130
 
