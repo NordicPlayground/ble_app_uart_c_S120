@@ -1,4 +1,4 @@
-PROJECT_NAME := ble_app_hrs_c_s120_pca10028
+PROJECT_NAME := ble_app_uart_c_s130_pca10028
 
 export OUTPUT_FILENAME
 #MAKEFILE_NAME := $(CURDIR)/$(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))
@@ -39,15 +39,19 @@ remduplicates = $(strip $(if $1,$(firstword $1) $(call remduplicates,$(filter-ou
 C_SOURCE_FILES += \
 ../../../../../../components/libraries/button/app_button.c \
 ../../../../../../components/libraries/util/app_error.c \
+../../../../../../components/libraries/util/app_error_weak.c \
 ../../../../../../components/libraries/fifo/app_fifo.c \
 ../../../../../../components/libraries/gpiote/app_gpiote.c \
 ../../../../../../components/libraries/timer/app_timer.c \
 ../../../../../../components/libraries/trace/app_trace.c \
 ../../../../../../components/libraries/util/nrf_assert.c \
 ../../../../../../components/libraries/uart/retarget.c \
-../../../../../../components/drivers_nrf/uart/app_uart_fifo.c \
-../../../../../../components/drivers_nrf/hal/nrf_delay.c \
+../../../../../../components/libraries/uart/app_uart_fifo.c \
+../../../../../../components/drivers_nrf/uart/nrf_drv_uart.c \
+../../../../../../components/drivers_nrf/delay/nrf_delay.c \
 ../../../../../../components/drivers_nrf/pstorage/pstorage.c \
+../../../../../../components/drivers_nrf/common/nrf_drv_common.c \
+../../../../../../components/drivers_nrf/gpiote/nrf_drv_gpiote.c \
 ../../../../../bsp/bsp.c \
 ../../../main.c \
 ../../../ble_uart_c.c \
@@ -64,10 +68,16 @@ ASM_SOURCE_FILES  = ../../../../../../components/toolchain/gcc/gcc_startup_nrf51
 
 #includes common to all targets
 INC_PATHS  = -I../../../config
+INC_PATHS += -I../../../config/ble_app_uart_s130_pca10028
 INC_PATHS += -I../../../../../../components/libraries/util
 INC_PATHS += -I../../../../../../components/ble/ble_services/ble_hrs_c
 INC_PATHS += -I../../../../../../components/toolchain/gcc
+INC_PATHS += -I../../../../../../components/libraries/uart
 INC_PATHS += -I../../../../../../components/drivers_nrf/uart
+INC_PATHS += -I../../../../../../components/drivers_nrf/delay
+INC_PATHS += -I../../../../../../components/drivers_nrf/gpiote
+INC_PATHS += -I../../../../../../components/drivers_nrf/config
+INC_PATHS += -I../../../../../../components/drivers_nrf/common
 INC_PATHS += -I../../../../../../components/ble/common
 INC_PATHS += -I../../../../../../components/libraries/trace
 INC_PATHS += -I../../../../../../components/libraries/fifo
@@ -76,10 +86,12 @@ INC_PATHS += -I../../../../../../components/ble/ble_services/ble_bas_c
 INC_PATHS += -I../../../../../../components/drivers_nrf/hal
 INC_PATHS += -I../../../../../../components/ble/device_manager
 INC_PATHS += -I../../../../../../components/toolchain
+INC_PATHS += -I../../../../../../components/toolchain/CMSIS/Include
 INC_PATHS += -I../../../../../../components/device
 INC_PATHS += -I../../../../../../components/ble/ble_db_discovery
 INC_PATHS += -I../../../../../../components/softdevice/common/softdevice_handler
-INC_PATHS += -I../../../../../../components/softdevice/s120/headers
+INC_PATHS += -I../../../../../../components/softdevice/s130/headers
+INC_PATHS += -I../../../../../../components/softdevice/s130/headers/nrf51
 INC_PATHS += -I../../../../../../components/drivers_nrf/pstorage
 INC_PATHS += -I../../../../../../components/libraries/timer
 INC_PATHS += -I../../../../../../components/libraries/gpiote
@@ -93,20 +105,20 @@ OUTPUT_BINARY_DIRECTORY = $(OBJECT_DIRECTORY)
 BUILD_DIRECTORIES := $(sort $(OBJECT_DIRECTORY) $(OUTPUT_BINARY_DIRECTORY) $(LISTING_DIRECTORY) )
 
 #flags common to all targets
-CFLAGS  = -DBOARD_PCA10028
+CFLAGS  = -DNRF_LOG_USES_UART=1
+CFLAGS += -DBOARD_PCA10028
 CFLAGS += -DSOFTDEVICE_PRESENT
 CFLAGS += -DNRF51
-CFLAGS += -DS120
-CFLAGS += -D__HEAP_SIZE=0
+CFLAGS += -DS130
 CFLAGS += -DBLE_STACK_SUPPORT_REQD
-CFLAGS += -DBSP_UART_SUPPORT
+CFLAGS += -DSWI_DISABLE0
 CFLAGS += -mcpu=cortex-m0
 CFLAGS += -mthumb -mabi=aapcs --std=gnu99
-CFLAGS += -Wall -Werror -O0
+CFLAGS += -Wall -Werror -O0 -g3
 CFLAGS += -mfloat-abi=soft
 # keep every function in separate section. This will allow linker to dump unused functions
 CFLAGS += -ffunction-sections -fdata-sections -fno-strict-aliasing
-CFLAGS += -flto -fno-builtin
+CFLAGS += -flto -fno-builtin --short-enums 
 CFLAGS += -DUART_TX_BUF_SIZE=256
 CFLAGS += -DUART_RX_BUF_SIZE=256
 
@@ -121,25 +133,26 @@ LDFLAGS += --specs=nano.specs -lc -lnosys
 
 # Assembler flags
 ASMFLAGS += -x assembler-with-cpp
+ASMFLAGS += -DNRF_LOG_USES_UART=1
 ASMFLAGS += -DBOARD_PCA10028
 ASMFLAGS += -DSOFTDEVICE_PRESENT
 ASMFLAGS += -DNRF51
-ASMFLAGS += -DS120
-ASMFLAGS += -D__HEAP_SIZE=0
+ASMFLAGS += -DS130
 ASMFLAGS += -DBLE_STACK_SUPPORT_REQD
-ASMFLAGS += -DBSP_UART_SUPPORT
+ASMFLAGS += -DSWI_DISABLE0
+
 #default target - first one defined
-default: clean nrf51422_xxac_s120
+default: clean nrf51422_xxac_s130
 
 #building all targets
 all: clean
 	$(NO_ECHO)$(MAKE) -f $(MAKEFILE_NAME) -C $(MAKEFILE_DIR) -e cleanobj
-	$(NO_ECHO)$(MAKE) -f $(MAKEFILE_NAME) -C $(MAKEFILE_DIR) -e nrf51422_xxac_s120 
+	$(NO_ECHO)$(MAKE) -f $(MAKEFILE_NAME) -C $(MAKEFILE_DIR) -e nrf51422_xxac_s130 
 
 #target for printing all targets
 help:
 	@echo following targets are available:
-	@echo 	nrf51422_xxac_s120
+	@echo 	nrf51422_xxac_s130
 
 
 C_SOURCE_FILE_NAMES = $(notdir $(C_SOURCE_FILES))
@@ -155,9 +168,9 @@ vpath %.s $(ASM_PATHS)
 
 OBJECTS = $(C_OBJECTS) $(ASM_OBJECTS)
 
-nrf51422_xxac_s120: OUTPUT_FILENAME := nrf51422_xxac_s120
-nrf51422_xxac_s120: LINKER_SCRIPT=ble_app_hrs_c_gcc_nrf51.ld
-nrf51422_xxac_s120: $(BUILD_DIRECTORIES) $(OBJECTS)
+nrf51422_xxac_s130: OUTPUT_FILENAME := nrf51422_xxac_s130
+nrf51422_xxac_s130: LINKER_SCRIPT=ble_app_hrs_c_gcc_nrf51.ld
+nrf51422_xxac_s130: $(BUILD_DIRECTORIES) $(OBJECTS)
 	@echo Linking target: $(OUTPUT_FILENAME).out
 	$(NO_ECHO)$(CC) $(LDFLAGS) $(OBJECTS) $(LIBS) -o $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out
 	$(NO_ECHO)$(MAKE) -f $(MAKEFILE_NAME) -C $(MAKEFILE_DIR) -e finalize
