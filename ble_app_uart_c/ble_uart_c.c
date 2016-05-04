@@ -15,7 +15,6 @@
 #include <string.h>
 
 #include "ble_uart_c.h"
-#include "ble_db_discovery.h"
 #include "ble_types.h"
 #include "ble_srv_common.h"
 #include "nordic_common.h"
@@ -135,25 +134,14 @@ static void on_hvx(ble_uart_c_t * p_ble_uart_c, const ble_evt_t * p_ble_evt)
 }
 
 
-/**@brief     Function for handling events from the database discovery module.
- *
- * @details   This function will handle an event from the database discovery module, and determine
- *            if it relates to the discovery of nordic uart service at the peer. If so, it will
- *            call the application's event handler indicating that the nordic uart service has been
- *            discovered at the peer. It also populates the event with the service related
- *            information before providing it to the application.
- *
- * @param[in] p_evt Pointer to the event received from the database discovery module.
- *
- */
-static void db_discover_evt_handler(ble_db_discovery_evt_t * p_evt)
+void ble_uart_c_on_db_disc_evt(ble_uart_c_t * p_ble_uart_c, ble_db_discovery_evt_t * p_evt)
 {
     // Check if the Nordic UART Service was discovered.
     if (p_evt->evt_type == BLE_DB_DISCOVERY_COMPLETE &&
         p_evt->params.discovered_db.srv_uuid.uuid == BLE_UUID_NUS_SERVICE &&
         p_evt->params.discovered_db.srv_uuid.type == uart_uuid.type)
     {
-        mp_ble_uart_c->conn_handle = p_evt->conn_handle;
+        p_ble_uart_c->conn_handle = p_evt->conn_handle;
 
         // Find the CCCD Handles of the TX/RX data characteristics.
         uint32_t i;
@@ -165,9 +153,9 @@ static void db_discover_evt_handler(ble_db_discovery_evt_t * p_evt)
                 
             {
                 // Found RX data characteristic. Store CCCD handle .
-                mp_ble_uart_c->RX_cccd_handle =
+                p_ble_uart_c->RX_cccd_handle =
                     p_evt->params.discovered_db.charateristics[i].cccd_handle;
-                mp_ble_uart_c->RX_handle      =
+                p_ble_uart_c->RX_handle      =
                     p_evt->params.discovered_db.charateristics[i].characteristic.handle_value;
                
             }
@@ -175,7 +163,7 @@ static void db_discover_evt_handler(ble_db_discovery_evt_t * p_evt)
 			&&(p_evt->params.discovered_db.charateristics[i].characteristic.uuid.type==uart_uuid.type))
             {
                 // Found TX data characteristic. Store CCCD handle .
-                mp_ble_uart_c->TX_handle      =
+                p_ble_uart_c->TX_handle      =
                     p_evt->params.discovered_db.charateristics[i].characteristic.handle_value;
                
             }
@@ -188,7 +176,7 @@ static void db_discover_evt_handler(ble_db_discovery_evt_t * p_evt)
 
         evt.evt_type = BLE_UART_C_EVT_DISCOVERY_COMPLETE;
 
-        mp_ble_uart_c->evt_handler(mp_ble_uart_c, &evt);
+        p_ble_uart_c->evt_handler(p_ble_uart_c, &evt);
     }
 }
 
@@ -221,7 +209,7 @@ uint32_t ble_uart_c_init(ble_uart_c_t * p_ble_uart_c, ble_uart_c_init_t * p_ble_
     mp_ble_uart_c->conn_handle    = BLE_CONN_HANDLE_INVALID;
     mp_ble_uart_c->RX_cccd_handle = BLE_GATT_HANDLE_INVALID;
 
-    return ble_db_discovery_evt_register(&uart_uuid, db_discover_evt_handler);
+    return ble_db_discovery_evt_register(&uart_uuid);
 }
 
 
@@ -270,8 +258,8 @@ static uint32_t cccd_configure(uint16_t conn_handle, uint16_t handle_cccd, bool 
     p_msg->req.write_req.gattc_params.p_value  = p_msg->req.write_req.gattc_value;
     p_msg->req.write_req.gattc_params.offset   = 0;
     p_msg->req.write_req.gattc_params.write_op = BLE_GATT_OP_WRITE_REQ;
-    p_msg->req.write_req.gattc_value[0]        = LSB(cccd_val);
-    p_msg->req.write_req.gattc_value[1]        = MSB(cccd_val);
+    p_msg->req.write_req.gattc_value[0]        = LSB_16(cccd_val);
+    p_msg->req.write_req.gattc_value[1]        = MSB_16(cccd_val);
     p_msg->conn_handle                         = conn_handle;
     p_msg->type                                = WRITE_REQ;
 

@@ -24,7 +24,7 @@
 #include "app_timer.h"
 #include "app_trace.h"
 #include "app_uart.h"
-#include "ble_advdata_parser.h"
+#include "ble_advdata.h"
 #include "ble.h"
 #include "ble_uart_c.h"
 #include "ble_db_discovery.h"
@@ -35,6 +35,12 @@
 #include "nrf_gpio.h"
 #include "pstorage.h"
 #include "softdevice_handler.h"
+#include "nrf_drv_config.h"
+#include "nrf_uart.h"
+
+
+#define CENTRAL_LINK_COUNT              1                             /**< Number of central links used by the application. When changing this number remember to adjust the RAM settings*/
+#define PERIPHERAL_LINK_COUNT           0                             /**< Number of peripheral links used by the application. When changing this number remember to adjust the RAM settings*/
 
 #if defined(BOARD_PCA10031)
 #define SCAN_LED_PIN_NO                  LED_RGB_BLUE                                   /**< Is on when device is scanning. */
@@ -67,7 +73,6 @@
 #define UUID16_SIZE                2                                  /**< Size of 16 bit UUID */
 #define BUTTON_DETECTION_DELAY               APP_TIMER_TICKS(50, APP_TIMER_PRESCALER)   /**< Delay from a GPIOTE event until a button is reported as pushed (in number of timer ticks). */
 #define APP_TIMER_PRESCALER                  0                                          /**< Value of the RTC1 PRESCALER register. */
-#define APP_TIMER_MAX_TIMERS                 4                                          /**< Maximum number of simultaneously created timers. */
 #define APP_TIMER_OP_QUEUE_SIZE              5                                          /**< Size of timer operation queues. */
 #define UART_SEND_INTERVAL          APP_TIMER_TICKS(1000, APP_TIMER_PRESCALER) /**< Battery level measurement interval (ticks). */
 #define UART_TX_BUF_SIZE                256                                         /**< UART TX buffer size. */
@@ -465,17 +470,22 @@ static void ble_stack_init(void)
 {
     uint32_t err_code;
 
+    nrf_clock_lf_cfg_t clock_lf_cfg = NRF_CLOCK_LFCLKSRC;
+
     // Initialize the SoftDevice handler module.
-    SOFTDEVICE_HANDLER_INIT(NRF_CLOCK_LFCLKSRC_XTAL_20_PPM, NULL);
+    SOFTDEVICE_HANDLER_INIT(&clock_lf_cfg, NULL);
 
     // Enable BLE stack.
     ble_enable_params_t ble_enable_params;
-    memset(&ble_enable_params, 0, sizeof(ble_enable_params));
+    err_code = softdevice_enable_get_default_config(CENTRAL_LINK_COUNT,
+                                                    PERIPHERAL_LINK_COUNT,
+                                                    &ble_enable_params);
+    APP_ERROR_CHECK(err_code);
 
-    ble_enable_params.gatts_enable_params.service_changed = false;
-    ble_enable_params.gap_enable_params.role              = BLE_GAP_ROLE_CENTRAL;
+    //Check the ram settings against the used number of links
+    CHECK_RAM_START_ADDR(CENTRAL_LINK_COUNT,PERIPHERAL_LINK_COUNT);
 
-    err_code = sd_ble_enable(&ble_enable_params);
+    err_code = softdevice_enable(&ble_enable_params);
     APP_ERROR_CHECK(err_code);
 
     // Register with the SoftDevice handler module for BLE events.
@@ -528,8 +538,8 @@ static void device_manager_init(void)
     param.sec_param.oob          = SEC_PARAM_OOB;
     param.sec_param.min_key_size = SEC_PARAM_MIN_KEY_SIZE;
     param.sec_param.max_key_size = SEC_PARAM_MAX_KEY_SIZE;
-    param.sec_param.kdist_periph.enc = 1;
-    param.sec_param.kdist_periph.id  = 1;
+    param.sec_param.kdist_peer.enc = 1;
+    param.sec_param.kdist_peer.id  = 1;
 
     err_code = dm_register(&m_dm_app_id,&param);
     APP_ERROR_CHECK(err_code);
@@ -607,7 +617,21 @@ static void uart_c_init(void)
 }
 
 
-
+/**@brief     Function for handling events from the database discovery module.
+ *
+ * @details   This function will handle an event from the database discovery module, and determine
+ *            if it relates to the discovery of nordic uart service at the peer. If so, it will
+ *            call the application's event handler indicating that the nordic uart service has been
+ *            discovered at the peer. It also populates the event with the service related
+ *            information before providing it to the application.
+ *
+ * @param[in] p_evt Pointer to the event received from the database discovery module.
+ *
+ */
+static void db_disc_evt_handler(ble_db_discovery_evt_t * p_evt)
+{
+    ble_uart_c_on_db_disc_evt(&m_ble_uart_c, p_evt);
+}
 
 
 /**
@@ -615,7 +639,7 @@ static void uart_c_init(void)
  */
 static void db_discovery_init(void)
 {
-    uint32_t err_code = ble_db_discovery_init();
+    uint32_t err_code = ble_db_discovery_init(db_disc_evt_handler);
     APP_ERROR_CHECK(err_code);
 }
 
@@ -685,7 +709,7 @@ static void scan_start(void)
 static void timers_init(void)
 {
     // Initialize timer module.
-    APP_TIMER_INIT(APP_TIMER_PRESCALER, 1, 2, false);
+    APP_TIMER_INIT(APP_TIMER_PRESCALER, APP_TIMER_OP_QUEUE_SIZE, false);
     
     // Create timers.
 }
@@ -702,9 +726,9 @@ static void uart_init(void)
           TX_PIN_NUMBER,
           RTS_PIN_NUMBER,
           CTS_PIN_NUMBER,
-          APP_UART_FLOW_CONTROL_ENABLED,
+          UART0_CONFIG_HWFC,
           false,
-          UART_BAUDRATE_BAUDRATE_Baud38400
+          UART0_CONFIG_BAUDRATE
       };
 
 
@@ -723,11 +747,10 @@ int main(void)
 {
     uint32_t err_code;
     
-    APP_TIMER_INIT(APP_TIMER_PRESCALER, APP_TIMER_MAX_TIMERS, APP_TIMER_OP_QUEUE_SIZE, NULL);
+    timers_init();
     err_code = bsp_init(BSP_INIT_LED | BSP_INIT_BUTTONS, APP_TIMER_TICKS(100, APP_TIMER_PRESCALER),NULL);
     APP_ERROR_CHECK(err_code);
     leds_init();
-    timers_init();
     uart_init();
    
     ble_stack_init();
