@@ -33,6 +33,7 @@
 
 #include <stdint.h>
 #include "ble.h"
+#include "ble_db_discovery.h"
 
 /**
  * @defgroup uart_c_enums Enumerations
@@ -175,6 +176,21 @@ void ble_uart_c_on_ble_evt(ble_uart_c_t * p_ble_uart_c, const ble_evt_t * p_ble_
  *                      by the SoftDevice API @ref sd_ble_gattc_write.
  */
 uint32_t ble_uart_c_rx_notif_enable(ble_uart_c_t * p_ble_uart_c);
+
+
+/**@brief     Function for handling events from the database discovery module.
+ *
+ * @details   This function will handle an event from the database discovery module, and determine
+ *            if it relates to the discovery of nordic uart service at the peer. If so, it will
+ *            call the application's event handler indicating that the nordic uart service has been
+ *            discovered at the peer. It also populates the event with the service related
+ *            information before providing it to the application.
+ *
+ * @param[in] p_ble_uart_c Pointer to the NUS client structure.
+ * @param[in] p_evt        Pointer to the event received from the database discovery module.
+ *
+ */
+void ble_uart_c_on_db_disc_evt(ble_uart_c_t * p_ble_uart_c, ble_db_discovery_evt_t * p_evt);
 
 /** @} */ // End tag for Function group.
 
