@@ -34,3 +34,17 @@ Icon
 # Files that might appear on external disk
 .Spotlight-V100
 .Trashes
+
+# Keil
+*.uvgui.*
+*.uvguix.*
+
+# Nordic
+_build/
+
+# Winmerge
+*.bak
+
+#SEGGER
+JLinkLog.txt
+JLinkSettings.ini
