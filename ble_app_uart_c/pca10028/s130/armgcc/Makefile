@@ -55,9 +55,7 @@ C_SOURCE_FILES += \
 ../../../../../bsp/bsp.c \
 ../../../main.c \
 ../../../ble_uart_c.c \
-../../../../../../components/ble/ble_services/ble_bas_c/ble_bas_c.c \
 ../../../../../../components/ble/ble_db_discovery/ble_db_discovery.c \
-../../../../../../components/ble/ble_services/ble_hrs_c/ble_hrs_c.c \
 ../../../../../../components/ble/common/ble_srv_common.c \
 ../../../../../../components/ble/device_manager/device_manager_central.c \
 ../../../../../../components/toolchain/system_nrf51.c \
@@ -70,7 +68,6 @@ ASM_SOURCE_FILES  = ../../../../../../components/toolchain/gcc/gcc_startup_nrf51
 INC_PATHS  = -I../../../config
 INC_PATHS += -I../../../config/ble_app_uart_s130_pca10028
 INC_PATHS += -I../../../../../../components/libraries/util
-INC_PATHS += -I../../../../../../components/ble/ble_services/ble_hrs_c
 INC_PATHS += -I../../../../../../components/toolchain/gcc
 INC_PATHS += -I../../../../../../components/libraries/uart
 INC_PATHS += -I../../../../../../components/drivers_nrf/uart
@@ -82,7 +79,6 @@ INC_PATHS += -I../../../../../../components/ble/common
 INC_PATHS += -I../../../../../../components/libraries/trace
 INC_PATHS += -I../../../../../../components/libraries/fifo
 INC_PATHS += -I../../../../../bsp
-INC_PATHS += -I../../../../../../components/ble/ble_services/ble_bas_c
 INC_PATHS += -I../../../../../../components/drivers_nrf/hal
 INC_PATHS += -I../../../../../../components/ble/device_manager
 INC_PATHS += -I../../../../../../components/toolchain
@@ -114,7 +110,7 @@ CFLAGS += -DBLE_STACK_SUPPORT_REQD
 CFLAGS += -DSWI_DISABLE0
 CFLAGS += -mcpu=cortex-m0
 CFLAGS += -mthumb -mabi=aapcs --std=gnu99
-CFLAGS += -Wall -Werror -O0 -g3
+CFLAGS += -Wall -Werror -O3 -g3
 CFLAGS += -mfloat-abi=soft
 # keep every function in separate section. This will allow linker to dump unused functions
 CFLAGS += -ffunction-sections -fdata-sections -fno-strict-aliasing
@@ -169,7 +165,7 @@ vpath %.s $(ASM_PATHS)
 OBJECTS = $(C_OBJECTS) $(ASM_OBJECTS)
 
 nrf51422_xxac_s130: OUTPUT_FILENAME := nrf51422_xxac_s130
-nrf51422_xxac_s130: LINKER_SCRIPT=ble_app_hrs_c_gcc_nrf51.ld
+nrf51422_xxac_s130: LINKER_SCRIPT=ble_app_uart_c_gcc_nrf51.ld
 nrf51422_xxac_s130: $(BUILD_DIRECTORIES) $(OBJECTS)
 	@echo Linking target: $(OUTPUT_FILENAME).out
 	$(NO_ECHO)$(CC) $(LDFLAGS) $(OBJECTS) $(LIBS) -o $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out
